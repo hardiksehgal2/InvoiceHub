@@ -1,0 +1,33 @@
+// E:\omazons-invoice\apps\api\tsconfig.json
+{
+  "compilerOptions": {
+    // File layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Environment — Node.js backend
+    "module": "CommonJS",
+    "target": "ES2020",
+    "lib": ["ES2020"],
+
+    // Node types — needed for process, Buffer, __dirname etc
+    "types": ["node"],
+
+    // Outputs
+    "sourceMap": true,
+    "declaration": false,      
+
+    "jsx": "react-jsx",
+
+    // Strict
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+
+  },
+  "references": [{ "path": "../../packages/shared" }],
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

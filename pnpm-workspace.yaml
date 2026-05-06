@@ -1,0 +1,6 @@
+# E:\omazons-invoice\pnpm-workspace.yaml
+# pnpm-workspace.yaml tells pnpm: 
+# "these folders are separate packages, but manage them together."
+packages:
+  - "apps/*"
+  - "packages/*"

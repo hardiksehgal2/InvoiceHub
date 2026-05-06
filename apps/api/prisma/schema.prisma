@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+
+
+generator client {
+
+  provider = "prisma-client-js"
+
+}
+
+datasource db {
+
+  provider = "postgresql"
+
+}
+
+enum InvoiceStatus {
+
+  draft
+
+  issued
+
+  paid
+
+  void
+
+}
+
+model Invoice {
+
+  id            Int           @id @default(autoincrement())
+
+  number        String        @unique
+
+  customerName  String
+
+  customerEmail String
+
+  currency      String        @default("INR")
+
+  subtotalMinor Int
+
+  taxMinor      Int
+
+  totalMinor    Int
+
+  taxRateBps    Int
+
+  status        InvoiceStatus @default(draft)
+
+  issuedAt      DateTime
+
+  dueAt         DateTime
+
+  createdAt     DateTime      @default(now())
+
+  updatedAt     DateTime      @updatedAt
+
+  lineItems     LineItem[]
+
+}
+
+model LineItem {
+
+  id             Int     @id @default(autoincrement())
+
+  invoiceId      Int
+
+  invoice        Invoice @relation(fields: [invoiceId], references: [id])
+
+  description    String
+
+  quantity       Int
+
+  unitPriceMinor Int
+
+  totalMinor     Int
+
+}
+
+model InvoiceCounter {
+
+  yearMonth  String @id
+
+  lastNumber Int    @default(0)
+
+}
