@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
 })
 
 type InvoiceForPDF = {
+  id: number
   number: string
   customerName: string
   customerEmail: string
@@ -40,6 +41,7 @@ type InvoiceForPDF = {
   status: string
   issuedAt: string
   dueAt: string
+  createdAt: string
 }
 
 function InvoicePDF({ invoice }: { invoice: InvoiceForPDF }) {
@@ -49,15 +51,22 @@ function InvoicePDF({ invoice }: { invoice: InvoiceForPDF }) {
         <Text style={[styles.title, styles.bold]}>{invoice.number}</Text>
 
         <View style={styles.section}>
+          <Text style={styles.label}>INVOICE ID</Text>
+          <Text>#{invoice.id}</Text>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.label}>BILL TO</Text>
           <Text>{invoice.customerName}</Text>
           <Text>{invoice.customerEmail}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text>Issued: {invoice.issuedAt.slice(0, 10)}</Text>
-          <Text>Due:    {invoice.dueAt.slice(0, 10)}</Text>
-          <Text>Status: {invoice.status.toUpperCase()}</Text>
+          <Text>Currency: {invoice.currency}</Text>
+          <Text>Status:   {invoice.status.toUpperCase()}</Text>
+          <Text>Issued:   {invoice.issuedAt.slice(0, 10)}</Text>
+          <Text>Due:      {invoice.dueAt.slice(0, 10)}</Text>
+          <Text>Created:  {invoice.createdAt.slice(0, 10)}</Text>
         </View>
 
         <View style={styles.tableHeader}>

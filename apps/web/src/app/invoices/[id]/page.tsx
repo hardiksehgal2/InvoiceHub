@@ -132,6 +132,9 @@ export default function InvoiceDetailsPage() {
                                 Invoice Number
                             </p>
 
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                ID: #{data.id}
+                            </p>
 
                             <h2 className="mt-2 text-4xl font-bold tracking-tight">
                                 {data.number}

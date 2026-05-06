@@ -122,6 +122,16 @@ export const invoiceColumns: ColumnDef<InvoiceResponse>[] = [
     cell: ({ getValue }) => formatDate(getValue<string>()),
   },
   {
+    accessorKey: "taxRateBps",
+    header: "Tax Rate",
+    cell: ({ getValue }) => `${getValue<number>() / 100}%`,
+  },
+  {
+    accessorKey: "createdAt",
+    header: "Created",
+    cell: ({ getValue }) => formatDate(getValue<string>()),
+  },
+  {
     id: "actions",
 
     header: "Actions",
