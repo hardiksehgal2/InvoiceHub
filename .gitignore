@@ -80,7 +80,6 @@ out
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 .output
 
 # Gatsby files
@@ -89,8 +88,7 @@ dist
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
-# vuepress build output
-.vuepress/dist
+
 
 # vuepress v2.x temp directory
 .temp
@@ -98,8 +96,7 @@ dist
 # Sveltekit cache directory
 .svelte-kit/
 
-# vitepress build output
-**/.vitepress/dist
+
 
 # vitepress cache directory
 **/.vitepress/cache
@@ -149,7 +146,7 @@ node_modules/
 .turbo/
 
 # Build outputs
-dist/
+
 .next/
 
 # Claude Code
@@ -167,3 +164,7 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+
+TESTS_EXPLAINED.md
+LOOM_SCRIPT.md

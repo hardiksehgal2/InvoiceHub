@@ -25,3 +25,30 @@ export interface Invoice {
   dueAt: string
   createdAt: string
 }
+
+export interface InvoiceListResponse {
+  data: Invoice[]
+  total: number
+  page: number
+  limit: number
+}
+
+export interface CreateLineItemPayload {
+  description: string
+  quantity: number
+  unitPriceMinor: number
+}
+
+export interface CreateInvoicePayload {
+  customerName: string
+  customerEmail: string
+  currency: string
+  lineItems: CreateLineItemPayload[]
+  taxRateBps: number
+  issuedAt: string
+  dueAt: string
+}
+
+export interface UpdateInvoiceStatusPayload {
+  status: InvoiceStatus
+}

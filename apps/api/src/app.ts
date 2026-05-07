@@ -21,7 +21,10 @@ fastify.setSerializerCompiler(serializerCompiler)
 fastify.register(sensible)
 fastify.register(prismaPlugin)
 fastify.register(cors, {
-  origin: ['http://localhost:3000'],
+   origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ],
   methods: ['GET', 'POST', 'PATCH'],
 });
 

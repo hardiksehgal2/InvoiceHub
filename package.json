@@ -5,7 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=vue-web --filter=api",
+    "dev:vue": "turbo dev --filter=vue-web",
+    "dev:all": "turbo dev",
     "build": "turbo build"
   },
   "keywords": [],

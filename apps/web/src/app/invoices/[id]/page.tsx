@@ -16,6 +16,7 @@ import {
 import {
     CalendarDays,
     CreditCard,
+    Download,
     FileText,
     Mail,
     Receipt,
@@ -65,6 +66,7 @@ export default function InvoiceDetailsPage() {
             );
         },
     });
+
     const { data, isLoading } = useQuery({
         queryKey: ["invoice", id],
 
@@ -95,6 +97,41 @@ export default function InvoiceDetailsPage() {
             </div>
         );
     }
+    async function handleDownloadPdf(
+        id: number,
+        invoiceNumber: string
+    ) {
+        try {
+            const blob =
+                await apiClient.downloadInvoicePdf(
+                    String(id)
+                );
+
+            const url =
+                window.URL.createObjectURL(blob);
+
+            const link =
+                document.createElement("a");
+
+            link.href = url;
+
+            link.download = `${invoiceNumber}.pdf`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            link.remove();
+
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.log(
+                "PDF DOWNLOAD ERROR:",
+                error
+            );
+        }
+    }
+
 
     return (
         <main className="min-h-screen bg-background text-foreground">
@@ -132,6 +169,7 @@ export default function InvoiceDetailsPage() {
                                 Invoice Number
                             </p>
 
+
                             <p className="mt-1 text-xs text-muted-foreground">
                                 ID: #{data.id}
                             </p>
@@ -144,6 +182,20 @@ export default function InvoiceDetailsPage() {
                                 {data.status.toUpperCase()}
                             </div>
                             <div className="mt-6 flex flex-wrap gap-3">
+                                <button
+                                    onClick={() =>
+                                        handleDownloadPdf(
+                                            data.id,
+                                            data.number
+                                        )
+                                    }
+                                    className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition hover:bg-muted hover:cursor-pointer"
+                                >
+                                    <Download className="h-4 w-4" />
+
+                                    Download PDF
+                                </button>
+
                                 {ALLOWED_STATUS_TRANSITIONS[
                                     data.status
                                 ].map((status) => (

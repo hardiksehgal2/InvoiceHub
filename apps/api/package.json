@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "tsx watch src/app.ts",
     "build": "tsc -b",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +32,7 @@
     "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
+    "vitest": "^3.0.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.6",
     "@types/node": "^25.6.0",

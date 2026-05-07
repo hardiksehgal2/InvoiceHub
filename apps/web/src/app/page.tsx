@@ -16,9 +16,13 @@ const Home = () => {
   const limit = 10;
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["invoices"],
+    queryKey: ["invoices", page],
 
-    queryFn: () => apiClient.getInvoiceListing(),
+    queryFn: () =>
+      apiClient.getInvoiceListing(
+        page,
+        limit
+      ),
   });
 
   if (isLoading)

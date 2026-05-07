@@ -28,40 +28,6 @@ function formatDate(iso: string) {
     year: "numeric",
   })
 }
-async function handleDownloadPdf(
-  id: number,
-  invoiceNumber: string
-) {
-  try {
-    const blob =
-      await apiClient.downloadInvoicePdf(
-        String(id)
-      );
-
-    const url =
-      window.URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-
-    link.download = `${invoiceNumber}.pdf`;
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    link.remove();
-
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.log(
-      "PDF DOWNLOAD ERROR:",
-      error
-    );
-  }
-}
 
 export const invoiceColumns: ColumnDef<InvoiceResponse>[] = [
   {
@@ -146,19 +112,7 @@ export const invoiceColumns: ColumnDef<InvoiceResponse>[] = [
             View
           </Link>
 
-          <button
-            onClick={() =>
-              handleDownloadPdf(
-                row.original.id,
-                row.original.number
-              )
-            }
-            className="inline-flex items-center gap-1 text-sm font-medium transition hover:text-primary hover:cursor-pointer hover:underline"
-          >
-            <Download className="h-4 w-4 " />
-
-            PDF
-          </button>
+          
         </div>
       );
     },
