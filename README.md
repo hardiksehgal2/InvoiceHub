@@ -1,6 +1,6 @@
 # InvoiceHub - Full-Stack Invoice Management System
 
-A full-stack invoice management application built as a take-home assignment. It supports creating invoices, listing them with pagination, updating statuses, and downloading PDF exports.
+A full-stack invoice management application built as a take-home assignment. Supports creating invoices, listing them with pagination, updating statuses, and downloading PDF exports.
 
 ---
 
@@ -9,25 +9,56 @@ A full-stack invoice management application built as a take-home assignment. It 
 ```
 omazons-invoice/
 ├── apps/
-│   ├── api/                  # Fastify REST API (Node.js + TypeScript)
+│   ├── api/                        # Fastify REST API (Node.js + TypeScript)
 │   │   ├── src/
 │   │   │   ├── modules/
-│   │   │   │   └── invoices/ # Routes, schemas, service layer
-│   │   │   ├── pdf/          # PDF generation (react-pdf/renderer)
-│   │   │   ├── plugins/      # Prisma plugin
-│   │   │   └── app.ts        # Fastify app setup + Swagger docs
-│   │   └── prisma/
-│   │       └── schema.prisma # DB schema (Invoice, LineItem, InvoiceCounter)
-│   └── web/                  # Next.js 16 frontend (React 19)
-│       └── src/
-│           ├── app/          # Next.js App Router pages
-│           ├── components/   # shadcn/ui + feature components
-│           └── api/          # Axios API client layer
+│   │   │   │   └── invoices/       # Routes, Zod schemas, service layer
+│   │   │   │       ├── invoices.routes.ts
+│   │   │   │       ├── invoices.schema.ts
+│   │   │   │       ├── invoices.service.ts
+│   │   │   │       └── invoices.service.test.ts  ← tests
+│   │   │   ├── pdf/                # PDF generation (@react-pdf/renderer)
+│   │   │   ├── plugins/            # Prisma Fastify plugin
+│   │   │   ├── utils/
+│   │   │   │   ├── money.ts        # Rounding + tax calculation
+│   │   │   │   └── money.test.ts   ← tests
+│   │   │   └── app.ts              # Fastify app + Swagger setup
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma       # DB schema (Invoice, LineItem, InvoiceCounter)
+│   │   │   └── migrations/         # Prisma migration history
+│   │   ├── .env.example            # Copy this to .env and fill in DATABASE_URL
+│   │   └── vitest.config.ts
+│   │
+│   ├── web/                        # Next.js 16 frontend (React 19) - original build
+│   │   ├── src/
+│   │   │   ├── app/                # Next.js App Router pages
+│   │   │   ├── components/         # shadcn/ui + feature components
+│   │   │   └── api/                # Axios client + types
+│   │   └── .env.example            # Copy to .env.local and fill in NEXT_PUBLIC_API_URL
+│   │
+│   └── vue-web/                    # Vue 3 frontend - Composition API rebuild
+│       ├── src/
+│       │   ├── views/              # InvoicesView.vue, InvoiceDetailView.vue
+│       │   ├── components/         # StatusBadge.vue, CreateInvoiceModal.vue
+│       │   ├── api/                # Axios client typed against @omazons/shared
+│       │   ├── router/             # Vue Router (/, /invoices/:id)
+│       │   └── utils/              # formatMoney, formatDate
+│       └── .env.example            # Copy to .env and fill in VITE_API_URL
+│
 ├── packages/
-│   └── shared/               # Shared Zod schemas + TypeScript types
-├── docker-compose.yml        # PostgreSQL 16 service
-├── turbo.json                # Turborepo task pipeline
-└── pnpm-workspace.yaml       # pnpm monorepo config
+│   └── shared/                     # Shared across all apps - single source of truth
+│       └── src/
+│           ├── types/
+│           │   └── invoice.types.ts    # Invoice, LineItem, InvoiceListResponse, payloads
+│           ├── schemas/
+│           │   └── invoice.schemas.ts  # Zod: CreateInvoiceSchema, UpdateInvoiceStatusSchema
+│           └── utils/
+│               └── invoice-status.ts   # ALLOWED_STATUS_TRANSITIONS, canTransitionInvoice
+│
+├── docker-compose.yml              # PostgreSQL 16
+├── turbo.json                      # Turborepo task pipeline
+├── pnpm-workspace.yaml             # pnpm monorepo config
+└── TESTS_EXPLAINED.md              # Beginner-friendly walkthrough of the test suite
 ```
 
 ---
@@ -36,117 +67,251 @@ omazons-invoice/
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16, React 19, Tailwind CSS v4, shadcn/ui |
-| State / Data Fetching | TanStack React Query, React Hook Form |
+| Frontend (Vue) | Vue 3, Composition API (`<script setup>`), Vue Router 4, Tailwind CSS v4 |
+| Frontend (React) | Next.js 16, React 19, Tailwind CSS v4, shadcn/ui |
+| State / Data Fetching | TanStack Query (Vue + React flavours) |
 | Backend | Fastify 5 (TypeScript) |
 | ORM | Prisma 7 + PostgreSQL adapter |
 | Database | PostgreSQL 16 |
-| Validation | Zod (shared across frontend + backend) |
+| Validation | Zod (shared schemas across frontend + backend) |
 | PDF Generation | @react-pdf/renderer |
+| Testing | Vitest |
 | Monorepo | Turborepo + pnpm workspaces |
 | Containerization | Docker Compose |
 
 ---
 
-## How to Run
+## Environment Variables
+
+Each app has a `.env.example` file. Copy it and fill in your values before running.
+
+### `apps/api/.env`
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/omazons_invoice"
+```
+
+### `apps/vue-web/.env` (Vue frontend)
+```bash
+cp apps/vue-web/.env.example apps/vue-web/.env
+```
+```env
+VITE_API_URL=http://localhost:3001
+```
+
+### `apps/web/.env.local` (React/Next.js frontend)
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- [Docker](https://www.docker.com/) (for PostgreSQL)
-- [Node.js](https://nodejs.org/) (v20+)
-- [pnpm](https://pnpm.io/) - install with `npm install -g pnpm`
+- [Docker](https://www.docker.com/) - for PostgreSQL
+- [Node.js](https://nodejs.org/) v20+
+- [pnpm](https://pnpm.io/) - `npm install -g pnpm`
 
-### Steps
+---
 
-**1. Clone and enter the repo**
+### Step 1 - Clone and install
 
 ```bash
 git clone <repo-url>
 cd omazons-invoice
+pnpm install
 ```
 
-**2. Start the database**
+This installs dependencies for all apps and packages in one go. Turborepo ensures `packages/shared` is built before the apps.
+
+---
+
+### Step 2 - Start the database
 
 ```bash
 docker compose up -d
 ```
 
-This spins up PostgreSQL 16 on port `5432` with database `omazons_invoice`.
+Spins up PostgreSQL 16 on port `5432` with database `omazons_invoice`.
 
-**3. Set up environment variables**
+---
 
-Create `apps/api/.env`:
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/omazons_invoice"
-```
-
-**4. Install dependencies and run migrations**
+### Step 3 - Set up environment variables
 
 ```bash
-pnpm install
-
+cp apps/api/.env.example        apps/api/.env
+cp apps/vue-web/.env.example    apps/vue-web/.env
+cp apps/web/.env.example        apps/web/.env.local
 ```
 
-**5. Start everything**
+Edit `apps/api/.env` and fill in your `DATABASE_URL` (the docker-compose default is already correct if you didn't change anything).
+
+---
+
+### Step 4 - Run database migrations
+
+**Do you need this?** Yes, on first run (or after pulling new migrations). This creates all the tables in the database.
+
+```bash
+pnpm --filter=api exec prisma migrate dev
+```
+
+If you only want to apply existing migrations without creating a new one (e.g. in production or on a fresh clone):
+
+```bash
+pnpm --filter=api exec prisma migrate deploy
+```
+
+If Prisma complains about the generated client being out of sync:
+
+```bash
+pnpm --filter=api exec prisma generate
+```
+
+---
+
+### Step 5 - Start the apps
 
 ```bash
 pnpm dev
 ```
 
-Turborepo runs both apps in parallel:
+This runs the **Vue 3 frontend + API** in parallel via Turborepo.
 
 | Service | URL |
 |---|---|
-| Frontend (Next.js) | http://localhost:3000 |
+| Vue 3 Frontend | http://localhost:5173 |
 | Backend API (Fastify) | http://localhost:3001 |
-| Swagger Docs | http://localhost:3001/docs |
-
-> A single `pnpm install && pnpm dev` (after `docker compose up -d`) brings up the entire stack. Turborepo ensures `packages/shared` is built before the apps start.
+| Swagger / API Docs | http://localhost:3001/docs |
 
 ---
 
-## What I'd Do Differently With Another 3 Hours
+## All Dev Commands
 
-- **Authentication system** - Add JWT-based auth with refresh tokens, protect all invoice routes, and introduce DTOs to cleanly separate API contracts from internal models.
-- **Deployment** - Containerize the API with a multi-stage Dockerfile, add a `docker-compose.prod.yml`, and set up a basic CI/CD pipeline (GitHub Actions) to lint, type-check, and build on every push.
-- **Error handling** - Centralize error handling in Fastify with a proper error plugin and return consistent problem+json shaped responses instead of ad-hoc error objects.
-- **Toasters** - A toast System where user's can see if there are any issues occured during the CRU operations
+```bash
+# Vue frontend + API (default)
+pnpm dev
+
+# Vue frontend only
+pnpm dev:vue
+
+# Everything - Vue + React/Next.js + API
+pnpm dev:all
+
+# React/Next.js frontend + API only
+pnpm --filter=web --filter=api dev
+
+# Build all packages and apps
+pnpm build
+
+# Build only the shared package
+pnpm --filter=@omazons/shared build
+```
+
+### API-specific commands
+
+```bash
+# Run migrations (apply all pending migrations to the DB)
+pnpm --filter=api exec prisma migrate dev
+
+# Apply migrations without creating new ones (deploy / CI)
+pnpm --filter=api exec prisma migrate deploy
+
+# Regenerate the Prisma client after schema changes
+pnpm --filter=api exec prisma generate
+
+# Open Prisma Studio (visual DB browser)
+pnpm --filter=api exec prisma studio
+
+# Run the API on its own
+pnpm --filter=api dev
+```
 
 ---
 
-## Tradeoffs Made and Why
+## Testing
+
+Tests live in the API package and cover three areas the brief specifically asked for.
+
+```bash
+# Run all tests once
+pnpm --filter=api test
+
+# Watch mode - re-runs on every file save
+pnpm --filter=api test:watch
+```
+
+### What is tested
+
+| File | What it covers |
+|---|---|
+| `src/utils/money.test.ts` | `roundHalfEven` (banker's rounding) and `calcTax` including `taxRateBps=1825` edge cases where the rounding algorithm is observable |
+| `src/modules/invoices/invoices.service.test.ts` | All 3 valid status transitions, all 13 invalid transitions (each checks the exact error message), invoice number monotonicity and zero-padding, counter independence across months |
+
+Tests run with **no database required** - Prisma is mocked with `vi.mock` so the suite is fast and works offline.
+
+See `TESTS_EXPLAINED.md` for a full beginner-friendly walkthrough of every test case.
+
+---
+
+## API Reference
+
+Full interactive docs at **http://localhost:3001/docs** (Swagger UI).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/invoices` | Create a new invoice |
+| `GET` | `/invoices?page=1&limit=10` | List invoices with pagination |
+| `GET` | `/invoices/:id` | Get a single invoice |
+| `PATCH` | `/invoices/:id/status` | Update invoice status |
+| `GET` | `/invoices/:id/pdf` | Download invoice as PDF |
+
+---
+
+## What I'd Do Differently With More Time
 
 
-**1. Fastify over Express**
-Fastify is significantly faster, has first-class TypeScript support, and the `@fastify/type-provider-zod` plugin makes type-safe route validation effortless. The tradeoff is a steeper learning curve and a smaller ecosystem of community plugins compared to Express.
+- **Authentication** - JWT-based auth with refresh tokens, protecting all invoice routes.
+- **Background PDF generation** - Currently PDFs are generated synchronously on the request thread using `@react-pdf/renderer` (which bundles React into the backend). For production I'd move this to a queue (BullMQ), store the output in S3, and return a pre-signed URL. Synchronous PDF generation blocks the event loop.
+- **Deployment** - Multi-stage Dockerfile for the API, `docker-compose.prod.yml`, and a GitHub Actions pipeline to lint, type-check, test, and build on every push.
+- **Toast notifications** - User feedback on create/update failures instead of silent errors.
 
-**2. No authentication**
-Auth was skipped to focus on the core invoice domain within the time constraint. Adding it later is clean because the Fastify plugin system makes it straightforward to register a JWT guard as a preHandler hook on any route set.
+---
 
-**3. Turborepo for monorepo orchestration**
-Turborepo gives dependency-aware parallel builds and remote caching out of the box. For a two-app monorepo this may feel like over-engineering, but it pays off immediately the moment a third package is added, and the setup cost is minimal.
+## Tradeoffs Made
+
+**Fastify over Express** - Faster, first-class TypeScript support, and `@fastify/type-provider-zod` makes type-safe route validation nearly automatic. Tradeoff: smaller plugin ecosystem.
+
+**No authentication** - Skipped to focus on the invoice domain within the time constraint. Adding it is clean: Fastify's plugin system lets you register a JWT `preHandler` hook across any route group without touching individual handlers.
+
+**Turborepo** - Dependency-aware parallel builds with task caching. May feel like overkill for two apps, but the `packages/shared` dependency makes it immediately useful and the setup cost is minimal.
+
+**Shared Zod schemas** - `packages/shared` exports types, Zod schemas, and status-transition logic consumed by both the API and both frontends. One change propagates everywhere with full type safety.
 
 ---
 
 ## One Thing I'd Push Back On
 
-**Storing PDF generation in the API layer.**
+**Synchronous PDF generation in the API.**
 
-The current implementation generates PDFs on-the-fly in the API server using `@react-pdf/renderer` (which embeds React as a dependency in the backend). For a real product, I'd push back on this and move PDF generation to a dedicated background job - triggered asynchronously after invoice creation, stored in object storage (S3), and served via a pre-signed URL. Generating PDFs synchronously on an HTTP request is slow, blocks the event loop, and doesn't scale well under concurrent load.
+`@react-pdf/renderer` blocks the Node.js event loop while rendering. Under concurrent load this degrades response times for all routes, not just PDF requests. I'd push back and move this to a background job: trigger after invoice creation, render to S3, return a pre-signed URL. The HTTP handler becomes a simple redirect - no blocking, scales horizontally.
 
 ---
 
 ## What I Learned
 
-This project was my first hands-on experience with **Fastify in TypeScript**, **Prisma + PostgreSQL**, and **Turborepo** in a real monorepo setup. Key takeaways:
-
-| Technology | Benefit |
+| Technology | Key takeaway |
 |---|---|
-| **Fastify** | Schema-first, blazing fast, TypeScript-native - feels like the modern Express |
-| **Prisma** | Type-safe queries with zero boilerplate; migrations are a first-class citizen |
-| **Turborepo** | Dependency-aware parallel builds with caching - monorepo management without the pain |
-| **pnpm workspaces** | Strict, disk-efficient, and the natural fit for monorepos |
-| **Zod (shared schemas)** | Single source of truth for validation that spans the entire stack |
-
-Building this end-to-end - from database schema through API to a polished UI - in a short window reinforced how much productivity a well-chosen stack buys you. The combination of Fastify + Prisma + Next.js + Turborepo feels genuinely cohesive and is something I'd reach for again.
+| **Fastify** | Schema-first, fast, TypeScript-native - feels like the modern Express |
+| **Prisma** | Type-safe queries, migrations as first-class citizens, zero boilerplate |
+| **Turborepo** | Dependency-aware parallel builds with caching - monorepo without the pain |
+| **Vue 3 Composition API** | `<script setup>` + `ref`/`computed`/`useQuery` is a clean, explicit alternative to React hooks |
+| **Banker's rounding** | Standard `Math.round` introduces consistent upward bias in financial calculations - `roundHalfEven` is the correct approach |
+| **Vitest mocking** | `vi.mock` lets you stub any module import so service-layer logic can be tested without a real database |
